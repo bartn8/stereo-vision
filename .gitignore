@@ -1,0 +1,12 @@
+reconstruction/base/librecon_base.a
+reconstruction/base/CMakeCache.txt
+reconstruction/base/CMakeFiles/
+reconstruction/base/Makefile
+reconstruction/base/cmake_install.cmake
+
+reconstruction/main/sgm_single/CMakeCache.txt
+reconstruction/main/sgm_single/CMakeFiles/
+reconstruction/main/sgm_single/libs/
+reconstruction/main/sgm_single/cmake_install.cmake
+reconstruction/main/sgm_single/Makefile
+reconstruction/main/sgm_single/sgm_single

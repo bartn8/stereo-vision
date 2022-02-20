@@ -12,13 +12,13 @@ void RunSGM(const int P1, const int P2, const std::string left_img_fname, const 
             const std::string output_folder)
 {
   std::vector<int> compression_params;
-  compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+  compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
   compression_params.push_back(9);
 
   //cv::Mat img_disp, img_disp_subpixel, mat_disp;
   cv::Mat img_disp, img8_disp;
-  cv::Mat img_left = cv::imread(left_img_fname, CV_LOAD_IMAGE_GRAYSCALE);
-  cv::Mat img_right = cv::imread(right_img_fname, CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat img_left = cv::imread(left_img_fname, cv::IMREAD_GRAYSCALE);
+  cv::Mat img_right = cv::imread(right_img_fname, cv::IMREAD_GRAYSCALE);
   //cv::imshow("img_left", img_left);
   //cv::waitKey(0);
 
