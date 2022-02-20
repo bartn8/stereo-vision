@@ -4,6 +4,10 @@ reconstruction/base/CMakeFiles/
 reconstruction/base/Makefile
 reconstruction/base/cmake_install.cmake
 
+reconstruction/base/rSGM/FastFilters.o
+reconstruction/base/rSGM/StereoBMHelper.o
+reconstruction/base/rSGM/rSGMCmd.o
+
 reconstruction/main/sgm_single/CMakeCache.txt
 reconstruction/main/sgm_single/CMakeFiles/
 reconstruction/main/sgm_single/libs/

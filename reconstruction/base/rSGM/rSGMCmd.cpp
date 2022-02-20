@@ -1,4 +1,4 @@
-// Copyright © Robert Spangenberg, 2014.
+// Copyright ï¿½ Robert Spangenberg, 2014.
 // See license.txt for more details
 
 #include "iostream"
@@ -319,8 +319,8 @@ int main(int argc, char **argv)
         //readPGM(myImg1, im1name);
         //readPGM(myImg2, im2name);
         cv::Mat img1, img2;
-        img1 = cv::imread(im1name, CV_LOAD_IMAGE_GRAYSCALE);
-        img2 = cv::imread(im2name, CV_LOAD_IMAGE_GRAYSCALE);
+        img1 = cv::imread(im1name, cv::IMREAD_GRAYSCALE);
+        img2 = cv::imread(im2name, cv::IMREAD_GRAYSCALE);
         MyImage<uint8> myImg1(img1.cols, img1.rows);
         MyImage<uint8> myImg2(img2.cols, img2.rows);
 
@@ -353,6 +353,7 @@ int main(int argc, char **argv)
             break;
         case 2:
             // striped SGM, 4 threads, 128 disparities
+            //Amico mio
             processCensus5x5SGM(leftImg, rightImg, dispImg, dispImgRight, myImg1.getWidth(), myImg1.getHeight(), 1, 8, 4, 4, 128);
             break;
         case 3:
