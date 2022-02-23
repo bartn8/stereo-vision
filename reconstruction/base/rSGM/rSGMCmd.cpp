@@ -345,7 +345,7 @@ int main(int argc, char **argv)
         switch (demo)  {
         case 0:
             // standard SGM, 2 threads, 64 disparities
-            processCensus5x5SGM(leftImg, rightImg, dispImg, dispImgRight, myImg1.getWidth(), myImg1.getHeight(), 0, 8, 2, 2, 64);
+            processCensus5x5SGM(leftImg, rightImg, dispImg, dispImgRight, myImg1.getWidth(), myImg1.getHeight(), 0, 8, 1, 2, 128);
             break;
         case 1:
             // striped SGM, 4 threads, 64 disparities
