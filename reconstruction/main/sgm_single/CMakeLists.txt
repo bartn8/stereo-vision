@@ -11,7 +11,7 @@ set(SRC_LIST ${SRC_LIST})
 add_subdirectory(../../../core/ libs/core/)
 add_subdirectory(../../base/ libs/base/)
 
-set(OpenCV_DIR "/usr/local/share/opencv4/lbpcascades")
+set(OpenCV_DIR "/usr/local/share/opencv4/")
 find_package(OpenCV REQUIRED)
 
 set(OPENCV_LIBS opencv_core opencv_imgproc opencv_highgui)

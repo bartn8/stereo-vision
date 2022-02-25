@@ -1,8 +1,10 @@
-// Copyright © Robert Spangenberg, 2014.
+// Copyright ï¿½ Robert Spangenberg, 2014.
 // See license.txt for more details
 
 #include "StereoCommon.h"
 #include "FastFilters.h"
+
+#include <stdio.h>
 
 #include <smmintrin.h> // intrinsics
 #include <emmintrin.h>
@@ -190,6 +192,8 @@ void census5x5_SSE(uint8* source, uint32* dest, uint32 width, uint32 height)
     uint32* result = dst + 2*width;
     const uint8* const end_input = src + width*height;
 
+    printf("Hola cicha 1\n");
+
     /* expand mask */
     __m128i expandByte1_First4 =  _mm_set_epi8(0x80u, 0x80u, 0x80u, 0x03u,0x80u, 0x80u, 0x80u, 0x02u,
                                                0x80u, 0x80u, 0x80u, 0x01u,0x80u, 0x80u, 0x80u, 0x00u);
@@ -200,6 +204,8 @@ void census5x5_SSE(uint8* source, uint32* dest, uint32 width, uint32 height)
     __m128i expandByte3_First4  = _mm_set_epi8(0x80u, 0x03u, 0x80u, 0x80u,0x80u, 0x02u, 0x80u, 0x80u,
                                                0x80u, 0x01u, 0x80u, 0x80u,0x80u, 0x00u, 0x80u, 0x80u);
 
+    printf("Hola cicha 2\n");                                               
+
     /* xor with 0x80, as it is a signed compare */
     __m128i l2_register = _mm_xor_si128(_mm_stream_load_si128( (__m128i*)( i0+2*width )) ,_mm_set1_epi8('\x80'));
     __m128i l3_register = _mm_xor_si128(_mm_stream_load_si128( (__m128i*)( i0+3*width )) ,_mm_set1_epi8('\x80'));
@@ -207,9 +213,13 @@ void census5x5_SSE(uint8* source, uint32* dest, uint32 width, uint32 height)
     __m128i l1_register = _mm_xor_si128(_mm_stream_load_si128( (__m128i*)( i0+width )) ,_mm_set1_epi8('\x80'));
     __m128i l0_register = _mm_xor_si128(_mm_stream_load_si128( (__m128i*)( i0 )) ,_mm_set1_epi8('\x80'));
 
+    printf("Hola cicha 3\n");
+
     i0 += 16;
 
     __m128i lastResult = _mm_setzero_si128();
+
+    
 
     for( ; i0+4*width < end_input; i0 += 16 ) {
 
@@ -419,6 +429,9 @@ void census5x5_SSE(uint8* source, uint32* dest, uint32 width, uint32 height)
             l4_register = l4_register_next;
 
     }
+
+    printf("Hola cicha 3\n");
+
     /* last pixels */
     {
         int i = height - 3;

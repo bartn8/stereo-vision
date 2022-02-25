@@ -14,3 +14,9 @@ reconstruction/main/sgm_single/libs/
 reconstruction/main/sgm_single/cmake_install.cmake
 reconstruction/main/sgm_single/Makefile
 reconstruction/main/sgm_single/sgm_single
+reconstruction/base/rSGM/pyrSGM.cpython-39-x86_64-linux-gnu.so
+reconstruction/main/sgm_single/data_cost_img.png
+reconstruction/main/sgm_single/view1_crop.png
+reconstruction/main/sgm_single/view5_crop.png
+reconstruction/main/sgm_single/out/disparities/view1_crop.png
+reconstruction/main/sgm_single/out/norm_hist/view1_crop.png
