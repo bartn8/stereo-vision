@@ -20,3 +20,4 @@ reconstruction/main/sgm_single/view1_crop.png
 reconstruction/main/sgm_single/view5_crop.png
 reconstruction/main/sgm_single/out/disparities/view1_crop.png
 reconstruction/main/sgm_single/out/norm_hist/view1_crop.png
+reconstruction/base/rSGM/pyrSGM.cpython-38-x86_64-linux-gnu.so
