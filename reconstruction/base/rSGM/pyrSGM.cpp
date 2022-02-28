@@ -7,6 +7,8 @@
 
 #include "StereoCommon.h"
 #include "FastFilters.h"
+#include "StereoSGM.h"
+#include "StereoBMHelper.h"
 
 extern "C" {
     static PyObject *_census5x5_SSE(PyObject *self, PyObject *args)
@@ -17,8 +19,8 @@ extern "C" {
         uint32 width;
         uint32 height;
 
-        uint8 *source_data;
-        uint32 *dest_data;
+        uint8 *source_mm;
+        uint32 *dest_mm;
 
         PyObject *_sourcearg=NULL, *_destarg=NULL;
         PyObject *_source=NULL, *_dest=NULL;
@@ -47,26 +49,26 @@ extern "C" {
         dest = (uint32*) PyArray_DATA(_dest);
 
         //Need another array because memory aligment in SSE is different.
-        source_data = (uint8*)_mm_malloc(width*height*sizeof(uint8), 16);
-        dest_data = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
+        source_mm = (uint8*)_mm_malloc(width*height*sizeof(uint8), 16);
+        dest_mm = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
 
         for(uint32 y = 0; y < height; y++){
             for(uint32 x = 0; x < width; x++){
-                source_data[y*width+x] = source[y*width+x];
+                source_mm[y*width+x] = source[y*width+x];
             }
         }
 
-        census5x5_SSE(source_data, dest_data, width, height);
+        census5x5_SSE(source_mm, dest_mm, width, height);
 
-        _mm_free(source_data);
+        _mm_free(source_mm);
         
         for(uint32 y = 0; y < height; y++){
             for(uint32 x = 0; x < width; x++){
-                dest[y*width+x] = dest_data[y*width+x];
+                dest[y*width+x] = dest_mm[y*width+x];
             }
         }
         
-        _mm_free(dest_data);
+        _mm_free(dest_mm);
 
         Py_DECREF(_source);
         
@@ -99,8 +101,8 @@ extern "C" {
         uint32 width;
         uint32 height;
 
-        float32 *source_data;
-        float32 *dest_data;
+        float32 *source_mm;
+        float32 *dest_mm;
 
         PyObject *_sourcearg=NULL, *_destarg=NULL;
         PyObject *_source=NULL, *_dest=NULL;
@@ -129,24 +131,24 @@ extern "C" {
         dest = (float32*) PyArray_DATA(_dest);
 
         //Need another array because memory aligment in SSE is different.
-        source_data = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
-        dest_data = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
+        source_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
+        dest_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
 
         for(uint32 y = 0; y < height; y++){
             for(uint32 x = 0; x < width; x++){
-                source_data[y*width+x] = source[y*width+x];
+                source_mm[y*width+x] = source[y*width+x];
             }
         }
 
-        median3x3_SSE(source_data, dest_data, width, height);
+        median3x3_SSE(source_mm, dest_mm, width, height);
 
         for(uint32 y = 0; y < height; y++){
             for(uint32 x = 0; x < width; x++){
-                dest[y*width+x] = dest_data[y*width+x];
+                dest[y*width+x] = dest_mm[y*width+x];
             }
         }
         
-        _mm_free(dest_data);
+        _mm_free(dest_mm);
 
         Py_DECREF(_source);
         
@@ -171,10 +173,161 @@ extern "C" {
         return NULL;
     }
 
+    static PyObject *_costMeasureCensus5x5_xyd_SSE(PyObject *self, PyObject *args)
+    {
+        //void costMeasureCensus5x5_xyd_SSE(uint32* leftcensus, uint32* rightcensus, 
+        //const sint32 height, const sint32 width, const sint32 dispCount, const uint16 invalidDispValue, uint16* dsi, sint32 numThreads);
+
+        uint32 *leftCensus;
+        uint32 *rightCensus;
+        uint32 width;// % 16
+        uint32 height;
+        uint32 dispCount;// % 8, <= 256
+        const uint16 invalidDispValue = 12;// init value for invalid disparities (half of max value seems ok) (max 24 because Hamming distance for 24 bits)
+        uint16* dsi;
+        uint32 numThreads;//1 or 2 or 4 threads
+
+        uint32 *leftCensus_mm;
+        uint32 *rightCensus_mm;
+        uint16* dsi_mm;
+
+        PyObject *_leftCensusarg=NULL, *_rightCensusarg=NULL, *_dsiarg=NULL;
+        PyObject *_leftCensus=NULL, *_rightCensus=NULL, *_dsi=NULL;
+
+        //Left Right DSI width height dispRange numThreads
+        if (!PyArg_ParseTuple(args, "O!O!O!IIII", &PyArray_Type, &_leftCensusarg,
+         &PyArray_Type, &_rightCensusarg, &PyArray_Type, &_dsiarg, &width, &height,
+         &dispCount,&numThreads)) return NULL;
+
+        if(width % 16 != 0){
+            PyErr_Format(PyExc_TypeError,
+                     "Width must be a multiple of 16 (%ldx%ld)", width, height);
+            goto fail;
+        }
+
+        if(dispCount % 8 != 0 || dispCount > 256){
+            PyErr_Format(PyExc_TypeError,
+                     "Disparity range must be a multiple of 8 and not greater than 256 (%ld)", dispCount);
+            goto fail;
+        }
+
+        if(numThreads != 1 && numThreads != 2 && numThreads != 4){
+            PyErr_Format(PyExc_TypeError,
+                     "NumThreads must be 1,2,4 (%ld)", numThreads);
+            goto fail;
+        }
+
+        _leftCensus = PyArray_FROM_OTF(_leftCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
+        if (_leftCensus == NULL) return NULL;
+
+        _rightCensus = PyArray_FROM_OTF(_rightCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
+        if (_rightCensus == NULL) return NULL;
+
+        #if NPY_API_VERSION >= 0x0000000c
+            _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
+        #else
+            _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY);
+        #endif
+
+        if (_dsi == NULL) goto fail;
+
+        leftCensus = (uint32*) PyArray_DATA(_leftCensus);
+        rightCensus = (uint32*) PyArray_DATA(_rightCensus);
+        dsi = (uint16*) PyArray_DATA(_dsi);
+
+        //Need another array because memory aligment in SSE is different.
+        leftCensus_mm = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
+        rightCensus_mm = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
+        dsi_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 32);
+
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                leftCensus_mm[y*width+x] = leftCensus[y*width+x];
+                rightCensus_mm[y*width+x] = rightCensus[y*width+x];
+            }
+        }
+
+        costMeasureCensus5x5_xyd_SSE(leftCensus_mm, rightCensus_mm, (sint32)height, (sint32)width, 
+        (sint32)dispCount, invalidDispValue, dsi_mm, (sint32)numThreads);
+
+        _mm_free(leftCensus_mm);
+        _mm_free(rightCensus_mm);
+        
+        for(uint32 d = 0; d < dispCount; d++){
+            for(uint32 y = 0; y < height; y++){
+                for(uint32 x = 0; x < width; x++){
+                    //TODO: testing
+                    dsi[d*width*height+y*width+x] = dsi_mm[d*width*height+y*width+x];
+                }
+            }
+        }
+        
+        _mm_free(dsi_mm);
+
+        Py_DECREF(_leftCensus);
+        Py_DECREF(_rightCensus);
+        
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dsi);
+        #endif
+        
+        Py_DECREF(_dsi);
+        Py_INCREF(Py_None);
+        return Py_None;
+
+        fail:
+
+        Py_DECREF(_leftCensus);
+        Py_DECREF(_rightCensus);
+
+        #if NPY_API_VERSION >= 0x0000000c
+        PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsi);
+        #endif
+
+        Py_XDECREF(_dsi);
+
+        return NULL;        
+    }
+
+    static PyObject *_matchWTA_SSE(PyObject *self, PyObject *args)
+    {
+    }
+
+    static PyObject *_matchWTAAndSubPixel_SSE(PyObject *self, PyObject *args)
+    {
+    }
+
+    static PyObject *_doLRCheck(PyObject *self, PyObject *args)
+    {
+    }
+
+    static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
+    {
+    }
+
+    static PyObject *_aggregate_SSE(PyObject *self, PyObject *args)
+    {
+    }
+
+    static PyObject *_process(PyObject *self, PyObject *args)
+    {
+    }  
+
+    static PyObject *_processParallel(PyObject *self, PyObject *args)
+    {
+    }     
 
     static PyMethodDef rSGMMethods[] = {
         {"census5x5_SSE", _census5x5_SSE, METH_VARARGS, "Census 5x5 with SSE optimization"},
         {"median3x3_SSE", _median3x3_SSE, METH_VARARGS, "Median 3x3 with SSE optimization"},
+        {"costMeasureCensus5x5_xyd_SSE", _costMeasureCensus5x5_xyd_SSE, METH_VARARGS, "Cost Measure (Hamming Distance) from census 5x5 with SSE optimization"},
+        {"matchWTA_SSE", _matchWTA_SSE, METH_VARARGS, "Winner takes all with SSE optimization"},
+        {"matchWTAAndSubPixel_SSE", _matchWTAAndSubPixel_SSE, METH_VARARGS, "Winner takes all and sub pixel refinement with SSE optimization"},
+        {"doLRCheck", _doLRCheck, METH_VARARGS, "Left Right Consistency check"},
+        {"_subPixelRefine", _subPixelRefine, METH_VARARGS, "Disparity sub pixel refinement"},
+        {"aggregate_SSE", _aggregate_SSE, METH_VARARGS, "SGM Cost Aggregation with SSE optimization"},
+        {"process", _process, METH_VARARGS, "Full rSGM pipeline"},
+        {"processParallel", _processParallel, METH_VARARGS, "Full rSGM pipeline with threads"},
         {NULL, NULL, 0, NULL}
     };
 

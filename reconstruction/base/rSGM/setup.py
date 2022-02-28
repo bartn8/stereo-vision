@@ -3,7 +3,7 @@ import sysconfig
 
 # Common flags for both release and debug builds.
 extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
-extra_compile_args += ["-I.", "-msse4.1", "-msse4.2", "-O3", "-ffast-math", "-march=native", "-fopenmp", "-Wno-write-strings"]
+extra_compile_args += ["-I.", "-msse4.1", "-msse4.2", "-O3", "-ffast-math", "-march=native", "-fopenmp", "-Wno-write-strings", "-fpermissive"]
 
 module_pyrSGM = Extension('pyrSGM',
                     sources = ['pyrSGM.cpp', 'FastFilters.cpp'],

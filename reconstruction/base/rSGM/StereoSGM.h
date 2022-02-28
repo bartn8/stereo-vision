@@ -1,4 +1,4 @@
-// Copyright © Robert Spangenberg, 2014.
+// Copyright ï¿½ Robert Spangenberg, 2014.
 // See license.txt for more details
 
 #pragma once
@@ -69,6 +69,8 @@ public:
      // SGM
     StereoSGM(int i_width, int i_height, int i_maxDisp, StereoSGMParams_t i_params);
     ~StereoSGM();
+
+    void aggregate(uint16* dsi, T* img);
 
     void process(uint16* dsi, T* img, float32* dispLeftImg, float32* dispRightImg);
 

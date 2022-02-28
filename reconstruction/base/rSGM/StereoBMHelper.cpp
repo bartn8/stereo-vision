@@ -1,4 +1,4 @@
-// Copyright © Robert Spangenberg, 2014.
+// Copyright ï¿½ Robert Spangenberg, 2014.
 // See license.txt for more details
 
 #include "StereoCommon.h"
@@ -87,7 +87,7 @@ void costMeasureCensus5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2
         }
     }
 
-    if (numThreads != 4) 
+    if (numThreads == 2) 
     {
 #pragma omp parallel num_threads(2)
         {
@@ -126,6 +126,8 @@ void costMeasureCensus5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2
                 }
             }
         }
+    }else{
+        costMeasureCensus5x5Line_xyd_SSE(intermediate1, intermediate2, width, dispCount, invalidDispValue, dsi, 2, height-2);
     }
     /* last 2 lines are empty*/
     for (int i=height-2;i<height;i++) {

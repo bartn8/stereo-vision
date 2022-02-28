@@ -1,4 +1,4 @@
-// Copyright © Robert Spangenberg, 2014.
+// Copyright ï¿½ Robert Spangenberg, 2014.
 // See license.txt for more details
 
 #include "StereoCommon.h"
@@ -98,6 +98,26 @@ inline sint32 adaptP2(const float32& alpha, const uint16& I_p, const uint16& I_p
 }
 
 template <typename T>
+void StereoSGM<T>::aggregate(uint16* dsi, T* img)
+{
+    if (m_params.Paths == 0) {
+        accumulateVariableParamsSSE<0>(dsi, img, m_S);
+    }
+    else if (m_params.Paths == 1) {
+        accumulateVariableParamsSSE<1>(dsi, img, m_S);
+    }
+    else if (m_params.Paths == 2) {
+        accumulateVariableParamsSSE<2>(dsi, img, m_S);
+    }
+    else if (m_params.Paths == 3) {
+        accumulateVariableParamsSSE<3>(dsi, img, m_S);
+    }
+    else if (m_params.Paths == 8) {
+        accumulateVariableParamsSSE<8>(dsi, img, m_S);
+    }    
+}
+
+template <typename T>
 void StereoSGM<T>::process(uint16* dsi, T* img, float32* dispLeftImg, float32* dispRightImg)
 {
     if (m_params.Paths == 0) {
@@ -129,7 +149,7 @@ void StereoSGM<T>::process(uint16* dsi, T* img, float32* dispLeftImg, float32* d
     }
 
     if (m_params.lrCheck) {
-        matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+        T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
         matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
 
         /* subpixel refine */
