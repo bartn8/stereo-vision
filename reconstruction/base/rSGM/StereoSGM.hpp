@@ -150,31 +150,31 @@ void StereoSGM<T>::process(uint16* dsi, T* img, float32* dispLeftImg, float32* d
 
     if (m_params.lrCheck) {
         T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
-        matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
+        T::matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
 
         /* subpixel refine */
         if (m_params.subPixelRefine != -1) {
-            subPixelRefine(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
+            T::subPixelRefine(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
         }
 
         if (m_params.MedianFilter) {
             median3x3_SSE(dispLeftImgUnfiltered, dispLeftImg, m_width, m_height);
             median3x3_SSE(dispRightImgUnfiltered, dispRightImg, m_width, m_height);
         } 
-        doLRCheck(dispLeftImg, dispRightImg, m_width, m_height, m_params.lrThreshold);
+        T::doLRCheck(dispLeftImg, dispRightImg, m_width, m_height, m_params.lrThreshold);
 
         if (m_params.rlCheck)
         {
-            doRLCheck(dispRightImg, dispLeftImg, m_width, m_height, m_params.lrThreshold);
+            T::doRLCheck(dispRightImg, dispLeftImg, m_width, m_height, m_params.lrThreshold);
         }
         
     } else {
         // find disparities with minimum accumulated costs
-        matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+        T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
 
         /* subpixel refine */
         if (m_params.subPixelRefine != -1) {
-            subPixelRefine(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
+            T::subPixelRefine(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
         }
     }
 }
@@ -214,8 +214,8 @@ void StereoSGM<T>::processParallel(uint16* dsi, T* img, float32* dispLeftImg, fl
     if (m_params.lrCheck) {
         // find disparities with minimum accumulated costs
         if (numThreads == 1) {
-            matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
-            matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
+            T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+            T::matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
         } else if (numThreads > 1) {
 #pragma omp parallel num_threads(2)
             {
@@ -224,14 +224,14 @@ void StereoSGM<T>::processParallel(uint16* dsi, T* img, float32* dispLeftImg, fl
 #pragma omp section
                     {
                         if (m_params.subPixelRefine != -1) {
-                            matchWTAAndSubPixel_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+                            T::matchWTAAndSubPixel_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
                         } else {
-                            matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+                            T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
                         }
                     }
 #pragma omp section
                     {
-                        matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
+                        T::matchWTARight_SSE(dispRightImgUnfiltered, m_S,m_width, m_height, m_maxDisp, m_params.Uniqueness);
                     }
                 }
             }
@@ -241,18 +241,18 @@ void StereoSGM<T>::processParallel(uint16* dsi, T* img, float32* dispLeftImg, fl
             median3x3_SSE(dispLeftImgUnfiltered, dispLeftImg, m_width, m_height);
             median3x3_SSE(dispRightImgUnfiltered, dispRightImg, m_width, m_height);
         }
-        doLRCheck(dispLeftImg, dispRightImg, m_width, m_height, m_params.lrThreshold);
+        T::doLRCheck(dispLeftImg, dispRightImg, m_width, m_height, m_params.lrThreshold);
 
         if (m_params.rlCheck)
         {
-            doRLCheck(dispRightImg, dispLeftImg, m_width, m_height, m_params.lrThreshold);
+            T::doRLCheck(dispRightImg, dispLeftImg, m_width, m_height, m_params.lrThreshold);
         }
     } else {
-        matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
+        T::matchWTA_SSE(dispLeftImgUnfiltered, m_S, m_width, m_height, m_maxDisp, m_params.Uniqueness);
 
         /* subpixel refine */
         if (m_params.subPixelRefine != -1) {
-            subPixelRefine(dispLeftImg, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
+            T::subPixelRefine(dispLeftImg, m_S, m_width, m_height, m_maxDisp, m_params.subPixelRefine);
         }
     }
 }

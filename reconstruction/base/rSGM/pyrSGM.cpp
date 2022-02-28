@@ -85,7 +85,7 @@ extern "C" {
         Py_XDECREF(_source);
 
         #if NPY_API_VERSION >= 0x0000000c
-        PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dest);
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dest);
         #endif
 
         Py_XDECREF(_dest);
@@ -165,7 +165,7 @@ extern "C" {
         Py_XDECREF(_source);
         
         #if NPY_API_VERSION >= 0x0000000c
-        PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dest);
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dest);
         #endif
 
         Py_XDECREF(_dest);
@@ -221,7 +221,7 @@ extern "C" {
         if (_leftCensus == NULL) return NULL;
 
         _rightCensus = PyArray_FROM_OTF(_rightCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
-        if (_rightCensus == NULL) return NULL;
+        if (_rightCensus == NULL) return fail;
 
         #if NPY_API_VERSION >= 0x0000000c
             _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
@@ -278,10 +278,10 @@ extern "C" {
         fail:
 
         Py_DECREF(_leftCensus);
-        Py_DECREF(_rightCensus);
+        Py_XDECREF(_rightCensus);
 
         #if NPY_API_VERSION >= 0x0000000c
-        PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsi);
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsi);
         #endif
 
         Py_XDECREF(_dsi);
@@ -291,6 +291,105 @@ extern "C" {
 
     static PyObject *_matchWTA_SSE(PyObject *self, PyObject *args)
     {
+        //void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
+        //const sint32 maxDisp, const float32 uniqueness);
+
+        float32 *dispImg;//Out
+        uint16* dsiAgg;//In
+        uint32 width;// % 16
+        uint32 height;
+        uint32 dispCount;// % 8, <= 256
+        float32 uniqueness;
+        
+        uint32 *dispImg_mm;
+        uint16* dsiAgg_mm;
+
+        PyObject *_dispImgarg=NULL, *_dsiAggarg=NULL;
+        PyObject *_dispImg=NULL, *_dsiAgg=NULL;
+
+        //Disp DSI width height dispRange numThreads
+        if (!PyArg_ParseTuple(args, "O!O!IIIf", &PyArray_Type, &_dispImgarg,
+         &PyArray_Type, &_dsiAggarg, &width, &height, &dispCount, &uniqueness)) return NULL;
+
+        if(width % 16 != 0){
+            PyErr_Format(PyExc_TypeError,
+                     "Width must be a multiple of 16 (%ldx%ld)", width, height);
+            goto fail;
+        }
+
+        if(dispCount % 8 != 0 || dispCount > 256){
+            PyErr_Format(PyExc_TypeError,
+                     "Disparity range must be a multiple of 8 and not greater than 256 (%ld)", dispCount);
+            goto fail;
+        }
+
+        if(uniqueness > 1.0f || uniqueness <= 0.0f){
+            PyErr_Format(PyExc_TypeError,
+                     "Uniqueness must be inside ]0,1] (%f)", uniqueness);
+            goto fail;
+        }
+
+        _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
+        if (_dispImg == NULL) return NULL;
+
+        #if NPY_API_VERSION >= 0x0000000c
+            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
+        #else
+            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY);
+        #endif
+
+        if (_dsiAgg == NULL) goto fail;
+
+        dispImg = (float32*) PyArray_DATA(_dispImg);
+        dsiAgg = (uint16*) PyArray_DATA(_dsiAgg);
+
+        //Need another array because memory aligment in SSE is different.
+        dispImg_mm = (float32*)_mm_malloc(m_width*m_height*sizeof(float32), 16);
+        dsiAgg_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
+
+        for(uint32 d = 0; d < dispCount; d++){
+            for(uint32 y = 0; y < height; y++){
+                for(uint32 x = 0; x < width; x++){
+                    //TODO: testing
+                    dsiAgg_mm[d*width*height+y*width+x] = dsiAgg[d*width*height+y*width+x];
+                }
+            }
+        }
+
+        matchWTA_SSE(dispImg_mm, dsiAgg_mm, (sint32)width, (sint32)height, 
+        (sint32) (dispCount-1), uniqueness);
+
+        _mm_free(dsiAgg_mm);
+                
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                dispImg[y*width+x] = dispImg_mm[y*width+x];
+            }
+        }
+        
+        _mm_free(dispImg_mm);
+
+        Py_DECREF(_dsiAgg);
+        
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dispImg);
+        #endif
+        
+        Py_DECREF(_dispImg);
+        Py_INCREF(Py_None);
+        return Py_None;
+
+        fail:
+
+        Py_DECREF(_dsiAgg);
+
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dispImg);
+        #endif
+
+        Py_XDECREF(_dispImg);
+
+        return NULL;      
     }
 
     static PyObject *_matchWTAAndSubPixel_SSE(PyObject *self, PyObject *args)
