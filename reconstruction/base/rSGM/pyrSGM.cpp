@@ -221,7 +221,7 @@ extern "C" {
         if (_leftCensus == NULL) return NULL;
 
         _rightCensus = PyArray_FROM_OTF(_rightCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
-        if (_rightCensus == NULL) return fail;
+        if (_rightCensus == NULL) goto fail;
 
         #if NPY_API_VERSION >= 0x0000000c
             _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
@@ -275,7 +275,7 @@ extern "C" {
         Py_INCREF(Py_None);
         return Py_None;
 
-        fail:
+        fail: 
 
         Py_DECREF(_leftCensus);
         Py_XDECREF(_rightCensus);
@@ -301,7 +301,7 @@ extern "C" {
         uint32 dispCount;// % 8, <= 256
         float32 uniqueness;
         
-        uint32 *dispImg_mm;
+        float32 *dispImg_mm;
         uint16* dsiAgg_mm;
 
         PyObject *_dispImgarg=NULL, *_dsiAggarg=NULL;
@@ -344,7 +344,7 @@ extern "C" {
         dsiAgg = (uint16*) PyArray_DATA(_dsiAgg);
 
         //Need another array because memory aligment in SSE is different.
-        dispImg_mm = (float32*)_mm_malloc(m_width*m_height*sizeof(float32), 16);
+        dispImg_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
         dsiAgg_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
 
         for(uint32 d = 0; d < dispCount; d++){
