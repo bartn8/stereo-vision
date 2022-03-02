@@ -133,35 +133,39 @@ inline uint16 popcount64LUT(const uint64& i)
     + m_popcount16LUT[(i>>32) & 0xFFFF]) + m_popcount16LUT[i>>48];
 }
 
-inline uint16* getDispAddr_xyd(uint16* dsi, sint32 width, sint32 disp, sint32 i, sint32 j, sint32 k)
-{
-    return dsi + i*(disp*width) + j*disp + k;
+extern "C"{
+
+    inline uint16* getDispAddr_xyd(uint16* dsi, sint32 width, sint32 disp, sint32 i, sint32 j, sint32 k)
+    {
+        return dsi + i*(disp*width) + j*disp + k;
+    }
+
+    /* fill disparity cube */
+    void costMeasureCensus5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2, 
+        const sint32 height, const sint32 width, const sint32 dispCount, const uint16 invalidDispValue, uint16* dsi, sint32 numThreads);
+    void costMeasureCensusCompressed5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2,
+        sint32 height, sint32 width, sint32 dispCount, const uint16 invalidDispValue, sint32 dispSubSample, uint16* dsi, sint32 numThreads);
+
+    void costMeasureCensus9x7_xyd_parallel(uint64* intermediate1, uint64* intermediate2,int height, int width, int dispCount, uint16* dsi,
+        sint32 numThreads);
+    void costMeasureCensusCompressed9x7_xyd(uint64* intermediate1, uint64* intermediate2,
+        sint32 height, sint32 width, sint32 dispCount, sint32 dispSubSample, uint16* dsi);
+
+
+    /* WTA disparity selection in disparity cube */
+    void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
+        const sint32 maxDisp, const float32 uniqueness);
+    void matchWTAAndSubPixel_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const int height, const int maxDisp, const float32 uniqueness);
+
+    void matchWTARight_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
+        const sint32 maxDisp, const float32 uniqueness);
+
+    void doLRCheck(float32* dispImg, float32* dispCheckImg,const sint32 width, const sint32 height, const sint32 lrThreshold);
+    void doRLCheck(float32* dispRightImg, float32* dispCheckImg,const sint32 width, const sint32 height, const sint32 lrThreshold);
+
+    void subPixelRefine(float32* dispImg, uint16* dsiImg,
+        const sint32 width, const sint32 height, const sint32 maxDisp, sint32 method);
+
+    void uncompressDisparities_SSE(float32* dispImg, const sint32 width, const sint32 height, uint32 stepwidth);
+
 }
-
-/* fill disparity cube */
-void costMeasureCensus5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2, 
-    const sint32 height, const sint32 width, const sint32 dispCount, const uint16 invalidDispValue, uint16* dsi, sint32 numThreads);
-void costMeasureCensusCompressed5x5_xyd_SSE(uint32* intermediate1, uint32* intermediate2,
-    sint32 height, sint32 width, sint32 dispCount, const uint16 invalidDispValue, sint32 dispSubSample, uint16* dsi, sint32 numThreads);
-
-void costMeasureCensus9x7_xyd_parallel(uint64* intermediate1, uint64* intermediate2,int height, int width, int dispCount, uint16* dsi,
-    sint32 numThreads);
-void costMeasureCensusCompressed9x7_xyd(uint64* intermediate1, uint64* intermediate2,
-    sint32 height, sint32 width, sint32 dispCount, sint32 dispSubSample, uint16* dsi);
-
-
-/* WTA disparity selection in disparity cube */
-void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
-    const sint32 maxDisp, const float32 uniqueness);
-void matchWTAAndSubPixel_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const int height, const int maxDisp, const float32 uniqueness);
-
-void matchWTARight_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
-    const sint32 maxDisp, const float32 uniqueness);
-
-void doLRCheck(float32* dispImg, float32* dispCheckImg,const sint32 width, const sint32 height, const sint32 lrThreshold);
-void doRLCheck(float32* dispRightImg, float32* dispCheckImg,const sint32 width, const sint32 height, const sint32 lrThreshold);
-
-void subPixelRefine(float32* dispImg, uint16* dsiImg,
-    const sint32 width, const sint32 height, const sint32 maxDisp, sint32 method);
-
-void uncompressDisparities_SSE(float32* dispImg, const sint32 width, const sint32 height, uint32 stepwidth);

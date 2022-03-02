@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from pyrSGM import census5x5_SSE, median3x3_SSE, costMeasureCensus5x5_xyd_SSE, matchWTA_SSE
+from pyrSGM import census5x5_SSE, median3x3_SSE, costMeasureCensus5x5_xyd_SSE, matchWTA_SSE, aggregate_SSE
 import os
 
 
@@ -24,9 +24,13 @@ cv2.imwrite(os.path.join("test_data", "census5.png"), rightCensus.astype(np.uint
 
 costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
 
+dsiAgg = np.zeros((h,w,dispCount), dtype=np.uint16)
+
+aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
+
 dispImg = np.zeros((h,w), dtype=np.float32)
 
-matchWTA_SSE(dispImg, dsi, w,h,dispCount,float(0.95))
+matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
 
 dispImgfiltered = np.zeros((h,w), dtype=np.float32)
 median3x3_SSE(dispImg, dispImgfiltered, w, h)

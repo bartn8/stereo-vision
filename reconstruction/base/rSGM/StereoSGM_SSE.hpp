@@ -1,6 +1,7 @@
 // Copyright � Robert Spangenberg, 2014.
 // See license.txt for more details
 
+#include "StereoBMHelper.h"
 #include "StereoCommon.h"
 #include "StereoSGM.h"
 #include <string.h>
@@ -115,7 +116,7 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
         uint16 minCost = MAX_SGM_COST;
         if (pass == 0) {
             for (int d=0; d < disp; d++) {
-                uint16 cost = *T::getDispAddr_xyd(dsi, width, disp, i1, j1, d);
+                uint16 cost = *getDispAddr_xyd(dsi, width, disp, i1, j1, d);
                 if (cost == 255)
                     cost = paramInvalidDispCost;
                 L_r0_last[d] = cost;
@@ -125,11 +126,11 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
                 if (cost < minCost) {
                     minCost = cost;
                 }
-                *T::getDispAddr_xyd(S, width, disp, i1,j1, d) = cost;
+                *getDispAddr_xyd(S, width, disp, i1,j1, d) = cost;
             }
         } else {
             for (int d=0; d < disp; d++) {
-                uint16 cost = *T::getDispAddr_xyd(dsi, width, disp, i1, j1, d);
+                uint16 cost = *getDispAddr_xyd(dsi, width, disp, i1, j1, d);
                 if (cost == 255)
                     cost = paramInvalidDispCost;
                 L_r0_last[d] = cost;
@@ -139,7 +140,7 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
                 if (cost < minCost) {
                     minCost = cost;
                 }
-                *T::getDispAddr_xyd(S, width, disp, i1,j1, d) += cost;
+                *getDispAddr_xyd(S, width, disp, i1,j1, d) += cost;
             }
         }
         *minL_r0_last = minCost;
@@ -152,7 +153,7 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
             uint16 minCost = MAX_SGM_COST;
             *minL_r0 = MAX_SGM_COST;
             for (int d=0; d < disp; d++) {
-                uint16 cost = *T::getDispAddr_xyd(dsi, width, disp, i1, j, d);
+                uint16 cost = *getDispAddr_xyd(dsi, width, disp, i1, j, d);
                 if (cost == 255)
                     cost = paramInvalidDispCost;
                 if (NPaths != 0) {
@@ -192,9 +193,9 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
 
                 // cost sum
                 if (pass == 0) {
-                    *T::getDispAddr_xyd(S, width, disp, i1,j, d) = saturate_cast<uint16>(cost + minPropCost);
+                    *getDispAddr_xyd(S, width, disp, i1,j, d) = saturate_cast<uint16>(cost + minPropCost);
                 } else {
-                    *T::getDispAddr_xyd(S, width, disp, i1,j, d) += saturate_cast<uint16>(cost + minPropCost);
+                    *getDispAddr_xyd(S, width, disp, i1,j, d) += saturate_cast<uint16>(cost + minPropCost);
                 }
                 
             }
@@ -282,7 +283,7 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
                     
                     __m128i cost8;
                     
-                    cost8 = _mm_load_si128( (__m128i*) T::getDispAddr_xyd(dsi, width, disp, i, j, d) );
+                    cost8 = _mm_load_si128( (__m128i*) getDispAddr_xyd(dsi, width, disp, i, j, d) );
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------
                     // minimum along L_r0
@@ -395,89 +396,89 @@ void StereoSGM<T>::accumulateVariableParamsSSE(uint16* &dsi, T* img, uint16* &S)
                     }
                    if (NPaths == 8) {
                         if (pass == 0) {
-                            _mm_store_si128((__m128i*) T::getDispAddr_xyd(S, width, disp, i,j, d) , newCost8_ges);
+                            _mm_store_si128((__m128i*) getDispAddr_xyd(S, width, disp, i,j, d) , newCost8_ges);
                         } else {
-                            _mm_store_si128((__m128i*) T::getDispAddr_xyd(S, width, disp, i,j, d) , _mm_adds_epu16(_mm_load_si128( (__m128i*) T::getDispAddr_xyd(S, width, disp, i, j, d) ), newCost8_ges));
+                            _mm_store_si128((__m128i*) getDispAddr_xyd(S, width, disp, i,j, d) , _mm_adds_epu16(_mm_load_si128( (__m128i*) getDispAddr_xyd(S, width, disp, i, j, d) ), newCost8_ges));
                         }
                     } else if ((NPaths == 0)) {
                         if (pass == 0) {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   = L_r0_last[d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r0_last[d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r0_last[d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r0_last[d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r0_last[d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r0_last[d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r0_last[d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r0_last[d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   = L_r0_last[d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r0_last[d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r0_last[d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r0_last[d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r0_last[d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r0_last[d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r0_last[d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r0_last[d+7];
                         } else {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d) +=   L_r0_last[d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r0_last[d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r0_last[d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r0_last[d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r0_last[d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r0_last[d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r0_last[d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r0_last[d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d) +=   L_r0_last[d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r0_last[d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r0_last[d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r0_last[d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r0_last[d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r0_last[d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r0_last[d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r0_last[d+7];
                         }
                     } else if (NPaths == 1) {
                         if (pass == 0) {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   = L_r1[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r1[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r1[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r1[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r1[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r1[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r1[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r1[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   = L_r1[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r1[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r1[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r1[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r1[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r1[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r1[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r1[j*dispP2+d+7];
                         } else {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d) += L_r1[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r1[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r1[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r1[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r1[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r1[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r1[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r1[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d) += L_r1[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r1[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r1[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r1[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r1[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r1[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r1[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r1[j*dispP2+d+7];
                         }
                     } else if (NPaths == 2) {
                         if (pass == 0) {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   = L_r2_last[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r2_last[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r2_last[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r2_last[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r2_last[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r2_last[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r2_last[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r2_last[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   = L_r2_last[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r2_last[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r2_last[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r2_last[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r2_last[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r2_last[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r2_last[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r2_last[j*dispP2+d+7];
                         } else {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   += L_r2_last[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r2_last[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r2_last[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r2_last[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r2_last[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r2_last[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r2_last[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r2_last[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   += L_r2_last[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r2_last[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r2_last[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r2_last[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r2_last[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r2_last[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r2_last[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r2_last[j*dispP2+d+7];
                         }
                     } else if (NPaths == 3) {
                         if (pass == 0) {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   = L_r3_last[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r3_last[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r3_last[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r3_last[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r3_last[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r3_last[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r3_last[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r3_last[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   = L_r3_last[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) = L_r3_last[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) = L_r3_last[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) = L_r3_last[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) = L_r3_last[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) = L_r3_last[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) = L_r3_last[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) = L_r3_last[j*dispP2+d+7];
                         } else {
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d)   += L_r3_last[j*dispP2+d];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r3_last[j*dispP2+d+1];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r3_last[j*dispP2+d+2];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r3_last[j*dispP2+d+3];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r3_last[j*dispP2+d+4];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r3_last[j*dispP2+d+5];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r3_last[j*dispP2+d+6];
-                            *T::getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r3_last[j*dispP2+d+7];
+                            *getDispAddr_xyd(S, width, disp, i,j, d)   += L_r3_last[j*dispP2+d];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+1) += L_r3_last[j*dispP2+d+1];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+2) += L_r3_last[j*dispP2+d+2];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+3) += L_r3_last[j*dispP2+d+3];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+4) += L_r3_last[j*dispP2+d+4];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+5) += L_r3_last[j*dispP2+d+5];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+6) += L_r3_last[j*dispP2+d+6];
+                            *getDispAddr_xyd(S, width, disp, i,j, d+7) += L_r3_last[j*dispP2+d+7];
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 #define PY_SSIZE_T_CLEAN
+
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
@@ -35,8 +36,9 @@ extern "C" {
         }
 
         _source = PyArray_FROM_OTF(_sourcearg, NPY_UBYTE, NPY_ARRAY_IN_ARRAY);
-        if (_source == NULL) return NULL;
+        if (_source == NULL) goto fail;
 
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dest = PyArray_FROM_OTF(_destarg, NPY_UINT, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -117,8 +119,9 @@ extern "C" {
         }
 
         _source = PyArray_FROM_OTF(_sourcearg, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
-        if (_source == NULL) return NULL;
+        if (_source == NULL) goto fail;
 
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dest = PyArray_FROM_OTF(_destarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -178,13 +181,13 @@ extern "C" {
         //void costMeasureCensus5x5_xyd_SSE(uint32* leftcensus, uint32* rightcensus, 
         //const sint32 height, const sint32 width, const sint32 dispCount, const uint16 invalidDispValue, uint16* dsi, sint32 numThreads);
 
-        uint32 *leftCensus;
-        uint32 *rightCensus;
+        uint32 *leftCensus;//In
+        uint32 *rightCensus;//In
         uint32 width;// % 16
         uint32 height;
         uint32 dispCount;// % 8, <= 256
         const uint16 invalidDispValue = 12;// init value for invalid disparities (half of max value seems ok) (max 24 because Hamming distance for 24 bits)
-        uint16* dsi;
+        uint16* dsi;//Out
         uint32 numThreads;//1 or 2 or 4 threads
 
         uint32 *leftCensus_mm;
@@ -218,11 +221,12 @@ extern "C" {
         }
 
         _leftCensus = PyArray_FROM_OTF(_leftCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
-        if (_leftCensus == NULL) return NULL;
+        if (_leftCensus == NULL) goto fail;
 
         _rightCensus = PyArray_FROM_OTF(_rightCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
         if (_rightCensus == NULL) goto fail;
 
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -256,7 +260,6 @@ extern "C" {
         for(uint32 d = 0; d < dispCount; d++){
             for(uint32 y = 0; y < height; y++){
                 for(uint32 x = 0; x < width; x++){
-                    //TODO: testing
                     dsi[d*width*height+y*width+x] = dsi_mm[d*width*height+y*width+x];
                 }
             }
@@ -277,7 +280,7 @@ extern "C" {
 
         fail: 
 
-        Py_DECREF(_leftCensus);
+        Py_XDECREF(_leftCensus);
         Py_XDECREF(_rightCensus);
 
         #if NPY_API_VERSION >= 0x0000000c
@@ -294,22 +297,22 @@ extern "C" {
         //void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const sint32 width, const sint32 height, 
         //const sint32 maxDisp, const float32 uniqueness);
 
+        uint16 *dsiAgg;//In
         float32 *dispImg;//Out
-        uint16* dsiAgg;//In
         uint32 width;// % 16
         uint32 height;
         uint32 dispCount;// % 8, <= 256
         float32 uniqueness;
         
         float32 *dispImg_mm;
-        uint16* dsiAgg_mm;
+        uint16 *dsiAgg_mm;
 
         PyObject *_dispImgarg=NULL, *_dsiAggarg=NULL;
         PyObject *_dispImg=NULL, *_dsiAgg=NULL;
 
         //Disp DSI width height dispRange numThreads
-        if (!PyArg_ParseTuple(args, "O!O!IIIf", &PyArray_Type, &_dispImgarg,
-         &PyArray_Type, &_dsiAggarg, &width, &height, &dispCount, &uniqueness)) return NULL;
+        if (!PyArg_ParseTuple(args, "O!O!IIIf", &PyArray_Type, &_dsiAggarg,
+         &PyArray_Type, &_dispImgarg, &width, &height, &dispCount, &uniqueness)) return NULL;
 
         if(width % 16 != 0){
             PyErr_Format(PyExc_TypeError,
@@ -329,28 +332,28 @@ extern "C" {
             goto fail;
         }
 
-        _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
-        if (_dispImg == NULL) return NULL;
-
-        #if NPY_API_VERSION >= 0x0000000c
-            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
-        #else
-            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY);
-        #endif
-
+        _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
         if (_dsiAgg == NULL) goto fail;
 
-        dispImg = (float32*) PyArray_DATA(_dispImg);
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
+        #if NPY_API_VERSION >= 0x0000000c
+            _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
+        #else
+            _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY);
+        #endif
+
+        if (_dispImg == NULL) goto fail;
+
         dsiAgg = (uint16*) PyArray_DATA(_dsiAgg);
-
+        dispImg = (float32*) PyArray_DATA(_dispImg);
+        
         //Need another array because memory aligment in SSE is different.
-        dispImg_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
         dsiAgg_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
-
+        dispImg_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
+        
         for(uint32 d = 0; d < dispCount; d++){
             for(uint32 y = 0; y < height; y++){
                 for(uint32 x = 0; x < width; x++){
-                    //TODO: testing
                     dsiAgg_mm[d*width*height+y*width+x] = dsiAgg[d*width*height+y*width+x];
                 }
             }
@@ -369,64 +372,196 @@ extern "C" {
         
         _mm_free(dispImg_mm);
 
-        Py_DECREF(_dsiAgg);
+        Py_DECREF(_dispImg);
         
         #if NPY_API_VERSION >= 0x0000000c
-            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dispImg);
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dsiAgg);
         #endif
         
-        Py_DECREF(_dispImg);
+        Py_DECREF(_dsiAgg);
         Py_INCREF(Py_None);
         return Py_None;
 
         fail:
 
-        Py_DECREF(_dsiAgg);
+        Py_XDECREF(_dispImg);
 
         #if NPY_API_VERSION >= 0x0000000c
-            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dispImg);
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsiAgg);
         #endif
 
-        Py_XDECREF(_dispImg);
+        Py_XDECREF(_dsiAgg);
 
         return NULL;      
     }
 
-    static PyObject *_matchWTAAndSubPixel_SSE(PyObject *self, PyObject *args)
-    {
-    }
-
-    static PyObject *_doLRCheck(PyObject *self, PyObject *args)
-    {
-    }
-
-    static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
-    {
-    }
-
     static PyObject *_aggregate_SSE(PyObject *self, PyObject *args)
     {
+        //StereoSGM(int i_width, int i_height, int i_maxDisp, StereoSGMParams_t i_params);
+        //void StereoSGM<T>::aggregate(uint16* dsi, T* img)
+
+        StereoSGMParams_t params;
+        params.lrCheck = false;
+        params.MedianFilter = false;
+        params.Paths = 8;
+        params.subPixelRefine = -1;
+        params.NoPasses = 2;
+        params.rlCheck = false;
+        params.InvalidDispCost = 12;//24 bit hamming distance / 2
+
+        //Fake init: mod obj after
+        StereoSGM<uint8> sgmobj(0, 0, 0, params);
+
+        uint8 *img;//In
+        uint16 *dsi;//In
+        uint16 *dsiAgg;//Out
+        uint32 width;// % 16
+        uint32 height;
+        uint32 dispCount;// % 8, <= 256
+
+        uint16 P1; // +/-1 discontinuity penalty
+        float32 Alpha; // variable P2 alpha
+        uint16 Gamma; // variable P2 gamma
+        uint16 P2min; // varP2 cannot get lower than P2min
+        
+        uint8 *img_mm;
+        uint16 *dsi_mm;
+        uint16 *dsiAgg_mm;
+
+        PyObject *_imgarg=NULL, *_dsiarg=NULL, *_dsiAggarg=NULL;
+        PyObject *_img=NULL, *_dsi=NULL, *_dsiAgg=NULL;
+
+        //img DSI DSIAgg width height dispRange P1 P2min Alpha Gamma
+        if (!PyArg_ParseTuple(args, "O!O!O!IIIHHfH", &PyArray_Type, &_imgarg,
+         &PyArray_Type, &_dsiarg, &PyArray_Type, &_dsiAggarg,
+          &width, &height, &dispCount, &P1, &P2min, &Alpha, &Gamma)) return NULL;
+
+        if(width % 16 != 0){
+            PyErr_Format(PyExc_TypeError,
+                     "Width must be a multiple of 16 (%ldx%ld)", width, height);
+            goto fail;
+        }
+
+        if(dispCount % 8 != 0 || dispCount > 256){
+            PyErr_Format(PyExc_TypeError,
+                     "Disparity range must be a multiple of 8 and not greater than 256 (%ld)", dispCount);
+            goto fail;
+        }
+
+        params.P1 = P1;
+        params.P2min = P2min;
+        params.Alpha = Alpha;
+        params.Gamma = Gamma;
+
+
+        _img = PyArray_FROM_OTF(_imgarg, NPY_UINT8, NPY_ARRAY_IN_ARRAY);
+        if (_img == NULL) goto fail;
+
+        _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
+        if (_dsi == NULL) goto fail;
+
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY 
+
+        #if NPY_API_VERSION >= 0x0000000c
+            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
+        #else
+            _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY);
+        #endif
+
+        if (_dsiAgg == NULL) goto fail;
+
+        img = (uint8*) PyArray_DATA(_img);
+        dsi = (uint16*) PyArray_DATA(_dsi);
+        dsiAgg = (uint16*) PyArray_DATA(_dsiAgg);
+
+        //Need another array because memory aligment in SSE is different.
+        img_mm = (uint8*)_mm_malloc(width*height*sizeof(uint8), 16);
+        dsi_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 32);
+        //dsiAgg_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
+
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                img_mm[y*width+x] = img[y*width+x];
+
+                for(uint32 d = 0; d < dispCount; d++){ 
+                    dsi_mm[d*width*height+y*width+x] = dsi[d*width*height+y*width+x];
+                }
+            }
+        }
+
+        sgmobj.adaptMemory(width, height, dispCount-1);
+        sgmobj.aggregate(dsi_mm, img_mm);
+        dsiAgg_mm = sgmobj.getS();
+
+        _mm_free(img_mm);
+        _mm_free(dsi_mm);
+                
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                for(uint32 d = 0; d < dispCount; d++){
+                    dsiAgg[d*width*height+y*width+x] = dsiAgg_mm[d*width*height+y*width+x];
+                }
+            }
+        }
+        
+        //deleted when removed from stack
+        //delete sgmobj;
+
+        Py_DECREF(_img);
+        Py_DECREF(_dsi);
+        
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dsiAgg);
+        #endif
+        
+        Py_DECREF(_dsiAgg);
+        Py_INCREF(Py_None);
+        return Py_None;
+
+        fail:
+        Py_XDECREF(_img);
+        Py_XDECREF(_dsi);
+
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsiAgg);
+        #endif
+
+        Py_XDECREF(_dsiAgg);
+
+        return NULL; 
     }
 
-    static PyObject *_process(PyObject *self, PyObject *args)
-    {
-    }  
+    // static PyObject *_matchWTAAndSubPixel_SSE(PyObject *self, PyObject *args)
+    // {
+    // }
 
-    static PyObject *_processParallel(PyObject *self, PyObject *args)
-    {
-    }     
+    // static PyObject *_doLRCheck(PyObject *self, PyObject *args)
+    // {
+    // }
+
+    // static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
+    // {
+    // }
+
+    // static PyObject *_process(PyObject *self, PyObject *args)
+    // {
+    // }  
+
+    // static PyObject *_processParallel(PyObject *self, PyObject *args)
+    // {
+    // }     
 
     static PyMethodDef rSGMMethods[] = {
         {"census5x5_SSE", _census5x5_SSE, METH_VARARGS, "Census 5x5 with SSE optimization"},
         {"median3x3_SSE", _median3x3_SSE, METH_VARARGS, "Median 3x3 with SSE optimization"},
         {"costMeasureCensus5x5_xyd_SSE", _costMeasureCensus5x5_xyd_SSE, METH_VARARGS, "Cost Measure (Hamming Distance) from census 5x5 with SSE optimization"},
         {"matchWTA_SSE", _matchWTA_SSE, METH_VARARGS, "Winner takes all with SSE optimization"},
-        {"matchWTAAndSubPixel_SSE", _matchWTAAndSubPixel_SSE, METH_VARARGS, "Winner takes all and sub pixel refinement with SSE optimization"},
-        {"doLRCheck", _doLRCheck, METH_VARARGS, "Left Right Consistency check"},
-        {"_subPixelRefine", _subPixelRefine, METH_VARARGS, "Disparity sub pixel refinement"},
         {"aggregate_SSE", _aggregate_SSE, METH_VARARGS, "SGM Cost Aggregation with SSE optimization"},
-        {"process", _process, METH_VARARGS, "Full rSGM pipeline"},
-        {"processParallel", _processParallel, METH_VARARGS, "Full rSGM pipeline with threads"},
+        //{"matchWTAAndSubPixel_SSE", _matchWTAAndSubPixel_SSE, METH_VARARGS, "Winner takes all and sub pixel refinement with SSE optimization"},
+        //{"doLRCheck", _doLRCheck, METH_VARARGS, "Left Right Consistency check"},
+        //{"_subPixelRefine", _subPixelRefine, METH_VARARGS, "Disparity sub pixel refinement"},
+        //{"process", _process, METH_VARARGS, "Full rSGM pipeline"},
+        //{"processParallel", _processParallel, METH_VARARGS, "Full rSGM pipeline with threads"},
         {NULL, NULL, 0, NULL}
     };
 
