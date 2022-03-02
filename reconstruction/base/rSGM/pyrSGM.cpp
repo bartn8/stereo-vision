@@ -116,13 +116,13 @@ extern "C" {
             goto fail;
         }
 
-        _source = PyArray_FROM_OTF(_sourcearg, NPY_CFLOAT, NPY_ARRAY_IN_ARRAY);
+        _source = PyArray_FROM_OTF(_sourcearg, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
         if (_source == NULL) return NULL;
 
         #if NPY_API_VERSION >= 0x0000000c
-            _dest = PyArray_FROM_OTF(_destarg, NPY_CFLOAT, NPY_ARRAY_INOUT_ARRAY2);
+            _dest = PyArray_FROM_OTF(_destarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
         #else
-            _dest = PyArray_FROM_OTF(_destarg, NPY_CFLOAT, NPY_ARRAY_INOUT_ARRAY);
+            _dest = PyArray_FROM_OTF(_destarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY);
         #endif
 
         if (_dest == NULL) goto fail;
