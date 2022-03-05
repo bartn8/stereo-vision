@@ -14,31 +14,33 @@ dispCount = int(128)
 
 startTime = time.time()
 
-dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
+for i in range(20):
 
-leftCensus = np.zeros(left.shape, dtype=np.uint32)
-rightCensus = np.zeros(left.shape, dtype=np.uint32)
+    dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
 
-census5x5_SSE(left, leftCensus, w, h)
-census5x5_SSE(right, rightCensus, w, h)
+    leftCensus = np.zeros(left.shape, dtype=np.uint32)
+    rightCensus = np.zeros(left.shape, dtype=np.uint32)
 
-cv2.imwrite(os.path.join("test_data", "census1.png"), leftCensus.astype(np.uint8))
-cv2.imwrite(os.path.join("test_data", "census5.png"), rightCensus.astype(np.uint8))
+    census5x5_SSE(left, leftCensus, w, h)
+    census5x5_SSE(right, rightCensus, w, h)
 
-costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
+    cv2.imwrite(os.path.join("test_data", "census1.png"), leftCensus.astype(np.uint8))
+    cv2.imwrite(os.path.join("test_data", "census5.png"), rightCensus.astype(np.uint8))
 
-dsiAgg = np.zeros((h,w,dispCount), dtype=np.uint16)
+    costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
 
-aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
+    dsiAgg = np.zeros((h,w,dispCount), dtype=np.uint16)
 
-dispImg = np.zeros((h,w), dtype=np.float32)
+    aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
 
-matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
-subPixelRefine(dsiAgg, dispImg, w,h,dispCount,0)
+    dispImg = np.zeros((h,w), dtype=np.float32)
 
-dispImgfiltered = np.zeros((h,w), dtype=np.float32)
-median3x3_SSE(dispImg, dispImgfiltered, w, h)
+    matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
+    subPixelRefine(dsiAgg, dispImg, w,h,dispCount,0)
+
+    dispImgfiltered = np.zeros((h,w), dtype=np.float32)
+    median3x3_SSE(dispImg, dispImgfiltered, w, h)
 
 cv2.imwrite(os.path.join("test_data", "disp1.png"), dispImgfiltered.astype(np.uint8))
 
-print(time.time()-startTime)
+print((time.time()-startTime)/20)
