@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
-from pyrSGM import census5x5_SSE, median3x3_SSE, costMeasureCensus5x5_xyd_SSE, matchWTA_SSE, aggregate_SSE
+from pyrSGM import census5x5_SSE, median3x3_SSE, costMeasureCensus5x5_xyd_SSE, matchWTA_SSE, aggregate_SSE, subPixelRefine
 import os
+import time
 
 
 left = cv2.imread(os.path.join("test_data", "view1_crop.png"), cv2.IMREAD_GRAYSCALE)
@@ -10,6 +11,8 @@ right = cv2.imread(os.path.join("test_data", "view5_crop.png"), cv2.IMREAD_GRAYS
 h,w = left.shape[:2]
 h,w = int(h), int(w)
 dispCount = int(128)
+
+startTime = time.time()
 
 dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
 
@@ -31,8 +34,11 @@ aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
 dispImg = np.zeros((h,w), dtype=np.float32)
 
 matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
+subPixelRefine(dsiAgg, dispImg, w,h,dispCount,0)
 
 dispImgfiltered = np.zeros((h,w), dtype=np.float32)
 median3x3_SSE(dispImg, dispImgfiltered, w, h)
 
 cv2.imwrite(os.path.join("test_data", "disp1.png"), dispImgfiltered.astype(np.uint8))
+
+print(time.time()-startTime)

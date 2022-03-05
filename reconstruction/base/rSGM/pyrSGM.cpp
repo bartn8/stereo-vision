@@ -372,25 +372,25 @@ extern "C" {
         
         _mm_free(dispImg_mm);
 
-        Py_DECREF(_dispImg);
+        Py_DECREF(_dsiAgg);
         
         #if NPY_API_VERSION >= 0x0000000c
-            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dsiAgg);
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dispImg);
         #endif
         
-        Py_DECREF(_dsiAgg);
+        Py_DECREF(_dispImg);
         Py_INCREF(Py_None);
         return Py_None;
 
         fail:
 
-        Py_XDECREF(_dispImg);
+        Py_XDECREF(_dsiAgg);
 
         #if NPY_API_VERSION >= 0x0000000c
-            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dsiAgg);
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dispImg);
         #endif
 
-        Py_XDECREF(_dsiAgg);
+        Py_XDECREF(_dispImg);
 
         return NULL;      
     }
@@ -531,15 +531,115 @@ extern "C" {
         return NULL; 
     }
 
+    static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
+    {
+        //    void subPixelRefine(float32* dispImg, uint16* dsiImg,
+        //const sint32 width, const sint32 height, const sint32 maxDisp, sint32 method);
+
+        uint16 *dsi;//In
+        float32 *dispImg;//Out
+        uint32 width;// % 16
+        uint32 height;
+        uint32 dispCount;// % 8, <= 256
+        uint32 method;
+        
+        float32 *dispImg_mm;
+        uint16 *dsi_mm;
+
+        PyObject *_dispImgarg=NULL, *_dsiarg=NULL;
+        PyObject *_dispImg=NULL, *_dsi=NULL;
+
+        //DSI DispImg width height dispRange  method
+        if (!PyArg_ParseTuple(args, "O!O!IIII", &PyArray_Type, &_dsiarg,
+         &PyArray_Type, &_dispImgarg, &width, &height, &dispCount, &method)) return NULL;
+
+        if(width % 16 != 0){
+            PyErr_Format(PyExc_TypeError,
+                     "Width must be a multiple of 16 (%ldx%ld)", width, height);
+            goto fail;
+        }
+
+        if(dispCount % 8 != 0 || dispCount > 256){
+            PyErr_Format(PyExc_TypeError,
+                     "Disparity range must be a multiple of 8 and not greater than 256 (%ld)", dispCount);
+            goto fail;
+        }
+
+        if(method != 0 && method != 1){
+            PyErr_Format(PyExc_TypeError,
+                     "method must be inside {0,1} (%d)", method);
+            goto fail;
+        }
+
+        _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
+        if (_dsi == NULL) goto fail;
+
+        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
+        #if NPY_API_VERSION >= 0x0000000c
+            _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
+        #else
+            _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY);
+        #endif
+
+        if (_dispImg == NULL) goto fail;
+
+        dsi = (uint16*) PyArray_DATA(_dsi);
+        dispImg = (float32*) PyArray_DATA(_dispImg);
+        
+        //Need another array because memory aligment in SSE is different.
+        dsi_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
+        dispImg_mm = (float32*)_mm_malloc(width*height*sizeof(float32), 16);
+        
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                dispImg_mm[y*width+x] = dispImg[y*width+x];
+                for(uint32 d = 0; d < dispCount; d++){
+                    dsi_mm[d*width*height+y*width+x] = dsi[d*width*height+y*width+x];
+                }
+            }
+        }
+
+        subPixelRefine(dispImg_mm, dsi_mm, (sint32)width, (sint32)height, 
+        (sint32) (dispCount-1), method);
+
+        _mm_free(dsi_mm);
+                
+        for(uint32 y = 0; y < height; y++){
+            for(uint32 x = 0; x < width; x++){
+                dispImg[y*width+x] = dispImg_mm[y*width+x];
+            }
+        }
+        
+        _mm_free(dispImg_mm);
+
+        Py_DECREF(_dsi);
+        
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_ResolveWritebackIfCopy((PyArrayObject*)_dispImg);
+        #endif
+        
+        Py_DECREF(_dispImg);
+        Py_INCREF(Py_None);
+        return Py_None;
+
+        fail:
+
+        Py_XDECREF(_dsi);
+
+        #if NPY_API_VERSION >= 0x0000000c
+            PyArray_DiscardWritebackIfCopy((PyArrayObject*)_dispImg);
+        #endif
+
+        Py_XDECREF(_dispImg);
+
+        return NULL;
+    }
+
     // static PyObject *_matchWTAAndSubPixel_SSE(PyObject *self, PyObject *args)
     // {
     // }
 
     // static PyObject *_doLRCheck(PyObject *self, PyObject *args)
-    // {
-    // }
-
-    // static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
     // {
     // }
 
@@ -557,9 +657,9 @@ extern "C" {
         {"costMeasureCensus5x5_xyd_SSE", _costMeasureCensus5x5_xyd_SSE, METH_VARARGS, "Cost Measure (Hamming Distance) from census 5x5 with SSE optimization"},
         {"matchWTA_SSE", _matchWTA_SSE, METH_VARARGS, "Winner takes all with SSE optimization"},
         {"aggregate_SSE", _aggregate_SSE, METH_VARARGS, "SGM Cost Aggregation with SSE optimization"},
+        {"subPixelRefine", _subPixelRefine, METH_VARARGS, "Disparity sub pixel refinement"},
         //{"matchWTAAndSubPixel_SSE", _matchWTAAndSubPixel_SSE, METH_VARARGS, "Winner takes all and sub pixel refinement with SSE optimization"},
         //{"doLRCheck", _doLRCheck, METH_VARARGS, "Left Right Consistency check"},
-        //{"_subPixelRefine", _subPixelRefine, METH_VARARGS, "Disparity sub pixel refinement"},
         //{"process", _process, METH_VARARGS, "Full rSGM pipeline"},
         //{"processParallel", _processParallel, METH_VARARGS, "Full rSGM pipeline with threads"},
         {NULL, NULL, 0, NULL}
