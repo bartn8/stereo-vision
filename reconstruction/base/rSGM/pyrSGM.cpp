@@ -38,7 +38,6 @@ extern "C" {
         _source = PyArray_FROM_OTF(_sourcearg, NPY_UBYTE, NPY_ARRAY_IN_ARRAY);
         if (_source == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dest = PyArray_FROM_OTF(_destarg, NPY_UINT, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -121,7 +120,6 @@ extern "C" {
         _source = PyArray_FROM_OTF(_sourcearg, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
         if (_source == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dest = PyArray_FROM_OTF(_destarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -226,7 +224,6 @@ extern "C" {
         _rightCensus = PyArray_FROM_OTF(_rightCensusarg, NPY_UINT32, NPY_ARRAY_IN_ARRAY);
         if (_rightCensus == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -335,7 +332,6 @@ extern "C" {
         _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
         if (_dsiAgg == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -460,8 +456,6 @@ extern "C" {
         _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
         if (_dsi == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY 
-
         #if NPY_API_VERSION >= 0x0000000c
             _dsiAgg = PyArray_FROM_OTF(_dsiAggarg, NPY_UINT16, NPY_ARRAY_INOUT_ARRAY2);
         #else
@@ -574,7 +568,6 @@ extern "C" {
         _dsi = PyArray_FROM_OTF(_dsiarg, NPY_UINT16, NPY_ARRAY_IN_ARRAY);
         if (_dsi == NULL) goto fail;
 
-        //TODO: vedere se necessario o basta NPY_ARRAY_IN_ARRAY
         #if NPY_API_VERSION >= 0x0000000c
             _dispImg = PyArray_FROM_OTF(_dispImgarg, NPY_FLOAT32, NPY_ARRAY_INOUT_ARRAY2);
         #else
