@@ -77,6 +77,7 @@ static PyObject *_census5x5_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dest);
+
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -142,6 +143,8 @@ static PyObject *_median3x3_SSE(PyObject *self, PyObject *args)
 
     median3x3_SSE(source_mm, dest_mm, width, height);
 
+    _mm_free(source_mm);
+
     for(uint32 y = 0; y < height; y++){
         for(uint32 x = 0; x < width; x++){
             dest[y*width+x] = dest_mm[y*width+x];
@@ -157,6 +160,7 @@ static PyObject *_median3x3_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dest);
+
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -271,6 +275,7 @@ static PyObject *_costMeasureCensus5x5_xyd_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dsi);
+    
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -374,6 +379,7 @@ static PyObject *_matchWTA_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dispImg);
+
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -478,6 +484,7 @@ static PyObject *_matchWTARight_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dispImg);
+
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -612,6 +619,7 @@ static PyObject *_aggregate_SSE(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dsiAgg);
+    
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -715,6 +723,7 @@ static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
     #endif
     
     Py_DECREF(_dispImg);
+    
     Py_INCREF(Py_None);
     return Py_None;
 
