@@ -242,7 +242,7 @@ static PyObject *_costMeasureCensus5x5_xyd_SSE(PyObject *self, PyObject *args)
     //Need another array because memory aligment in SSE is different.
     leftCensus_mm = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
     rightCensus_mm = (uint32*)_mm_malloc(width*height*sizeof(uint32), 16);
-    dsi_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 32);
+    dsi_mm = (uint16*)_mm_malloc(width*height*(dispCount)*sizeof(uint16), 16);
 
     for(uint32 y = 0; y < height; y++){
         for(uint32 x = 0; x < width; x++){

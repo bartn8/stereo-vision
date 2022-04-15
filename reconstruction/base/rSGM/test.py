@@ -14,33 +14,32 @@ dispCount = int(128)
 
 startTime = time.time()
 
-for i in range(20):
+#for i in range(20):
 
-    dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
+dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
 
-    leftCensus = np.zeros(left.shape, dtype=np.uint32)
-    rightCensus = np.zeros(left.shape, dtype=np.uint32)
+leftCensus = np.zeros(left.shape, dtype=np.uint32)
+rightCensus = np.zeros(left.shape, dtype=np.uint32)
 
-    census5x5_SSE(left, leftCensus, w, h)
-    census5x5_SSE(right, rightCensus, w, h)
+census5x5_SSE(left, leftCensus, w, h)
+census5x5_SSE(right, rightCensus, w, h)
 
-    cv2.imwrite(os.path.join("test_data", "census1.png"), leftCensus.astype(np.uint8))
-    cv2.imwrite(os.path.join("test_data", "census5.png"), rightCensus.astype(np.uint8))
+costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
 
-    costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
+dsiAgg = np.zeros((h,w,dispCount), dtype=np.uint16)
 
-    dsiAgg = np.zeros((h,w,dispCount), dtype=np.uint16)
+aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
 
-    aggregate_SSE(left, dsi, dsiAgg, w, h, dispCount, 7, 17, 0.25, 50)
+dispImg = np.zeros((h,w), dtype=np.float32)
 
-    dispImg = np.zeros((h,w), dtype=np.float32)
+matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
+subPixelRefine(dsiAgg, dispImg, w,h,dispCount,0)
 
-    matchWTA_SSE(dsiAgg, dispImg, w,h,dispCount,float(0.95))
-    subPixelRefine(dsiAgg, dispImg, w,h,dispCount,0)
+dispImgfiltered = np.zeros((h,w), dtype=np.float32)
+median3x3_SSE(dispImg, dispImgfiltered, w, h)
 
-    dispImgfiltered = np.zeros((h,w), dtype=np.float32)
-    median3x3_SSE(dispImg, dispImgfiltered, w, h)
+print((time.time()-startTime)*1000)
 
+cv2.imwrite(os.path.join("test_data", "census1.png"), leftCensus.astype(np.uint8))
+cv2.imwrite(os.path.join("test_data", "census5.png"), rightCensus.astype(np.uint8))
 cv2.imwrite(os.path.join("test_data", "disp1.png"), dispImgfiltered.astype(np.uint8))
-
-print((time.time()-startTime)/20)

@@ -733,6 +733,7 @@ void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const int 
                     }
                 }
                 // assign disparity
+                // Analisi dei minimo e del secondo minimo
                 if (1024*minCost <=  secMinCost*factorUniq || abs(bestDisp - secBestDisp) < 2) {
                     *pDestDisp = (float)bestDisp;
                 } else {
