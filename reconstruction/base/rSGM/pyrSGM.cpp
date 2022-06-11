@@ -750,6 +750,8 @@ static PyObject *_subPixelRefine(PyObject *self, PyObject *args)
 
 // static PyObject *_process(PyObject *self, PyObject *args)
 // {
+//     //StereoSGM(int i_width, int i_height, int i_maxDisp, StereoSGMParams_t i_params)
+//     //process(uint16* dsi, T* img, float32* dispLeftImg, float32* dispRightImg)
 // }  
 
 // static PyObject *_processParallel(PyObject *self, PyObject *args)
