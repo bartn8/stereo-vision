@@ -31,21 +31,26 @@ def my_linear_contrast_stretching(gray_image):
         image = np.clip(image, 0, 255)
         return image.astype(np.uint8)
 
-left = (cv2.imread(os.path.join("test_data", "im0.png"), cv2.IMREAD_GRAYSCALE))
-right = (cv2.imread(os.path.join("test_data", "im1.png"), cv2.IMREAD_GRAYSCALE))
+left = (cv2.imread(os.path.join("test_data", "im0.png"), cv2.IMREAD_UNCHANGED))
+right = (cv2.imread(os.path.join("test_data", "im1.png"), cv2.IMREAD_UNCHANGED))
 
-left, right = gt_resize_scaling(left, right, 1)
+#left, right = gt_resize_scaling(left, right, 1)
 
 left = rsgm_double_crop(left)
 right = rsgm_double_crop(right)
+
+print(left.shape)
+print(right[210,346])
 
 h,w = left.shape[:2]
 h,w = int(h), int(w)
 dispCount = int(256)
 
+tests = 1
 startTime = time.time()
 
-for i in range(5):
+
+for i in range(tests):
     dsi = np.zeros((h,w,dispCount), dtype=np.uint16)
 
     leftCensus = np.zeros(left.shape, dtype=np.uint32)
@@ -53,6 +58,12 @@ for i in range(5):
 
     census5x5_SSE(left, leftCensus, w, h)
     census5x5_SSE(right, rightCensus, w, h)
+
+    #print("{0:024b}".format((leftCensus[210,401]) ))
+    print("{0:024b}".format((~leftCensus[210,401]) & 0x00FFFFFF))
+
+    #print("{0:024b}".format((rightCensus[210,346]) ))
+    print("{0:024b}".format((~rightCensus[210,346]) & 0x00FFFFFF))
 
     costMeasureCensus5x5_xyd_SSE(leftCensus, rightCensus, dsi, w, h, dispCount, 4)
 
@@ -68,7 +79,7 @@ for i in range(5):
     dispImgfiltered = np.zeros((h,w), dtype=np.float32)
     median3x3_SSE(dispImg, dispImgfiltered, w, h)
 
-print(((time.time()-startTime)*1000)/5)
+print(((time.time()-startTime)*1000)/tests)
 
 dispImgfiltered[dispImgfiltered<=0] = 0
 
