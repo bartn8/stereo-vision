@@ -697,22 +697,22 @@ void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const int 
                 pCostBase[bestDisp]=(uint16)minCost;
                 
                 // assign disparity
-                // if (1024*minCost <=  secMinCost*factorUniq) {
-                //     *pDestDisp = (float)bestDisp;
-                // } else {
-                //     bool check = false;
-                //     if (bestDisp < (uint32)maxDisp-1 && pCostBase[bestDisp+1] == secMinCost) {
-                //         check=true;
-                //     } 
-                //     if (bestDisp>0 && pCostBase[bestDisp-1] == secMinCost) {
-                //         check=true;
-                //     }
-                //     if (!check) {
-                //         *pDestDisp = -10;
-                //     } else {
-                //         *pDestDisp = (float)bestDisp;
-                //     }
-                // }
+                if (1024*minCost <=  secMinCost*factorUniq) {
+                    *pDestDisp = (float)bestDisp;
+                } else {
+                    bool check = false;
+                    if (bestDisp < (uint32)maxDisp-1 && pCostBase[bestDisp+1] == secMinCost) {
+                        check=true;
+                    } 
+                    if (bestDisp>0 && pCostBase[bestDisp-1] == secMinCost) {
+                        check=true;
+                    }
+                    if (!check) {
+                        *pDestDisp = -10;
+                    } else {
+                        *pDestDisp = (float)bestDisp;
+                    }
+                }
 
                 *pDestDisp = (float)bestDisp;
                 
@@ -736,11 +736,11 @@ void matchWTA_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const int 
                 }
                 // assign disparity
                 // Analisi dei minimo e del secondo minimo
-                // if (1024*minCost <=  secMinCost*factorUniq || abs(bestDisp - secBestDisp) < 2) {
-                //     *pDestDisp = (float)bestDisp;
-                // } else {
-                //     *pDestDisp = -10;
-                // }
+                if (1024*minCost <=  secMinCost*factorUniq || abs(bestDisp - secBestDisp) < 2) {
+                    *pDestDisp = (float)bestDisp;
+                } else {
+                    *pDestDisp = -10;
+                }
 
                 *pDestDisp = (float)bestDisp;
             }
@@ -966,17 +966,17 @@ void matchWTARight_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const
 #endif
 
                 // assign disparity
-                // if (1024U*minCost <=  secMinCost*factorUniq) {
-                //     *pDestDisp = (float)bestDisp;
-                // } else {
-                //     bool check = (store[16+bestDisp+1] == secMinCost);
-                //     check = check  | (store[16+bestDisp-1] == secMinCost);
-                //     if (!check) {
-                //         *pDestDisp = -10;
-                //     } else {
-                //         *pDestDisp = (float)bestDisp;
-                //     }
-                // }
+                if (1024U*minCost <=  secMinCost*factorUniq) {
+                    *pDestDisp = (float)bestDisp;
+                } else {
+                    bool check = (store[16+bestDisp+1] == secMinCost);
+                    check = check  | (store[16+bestDisp-1] == secMinCost);
+                    if (!check) {
+                        *pDestDisp = -10;
+                    } else {
+                        *pDestDisp = (float)bestDisp;
+                    }
+                }
 
                 *pDestDisp = (float)bestDisp;
 
@@ -1000,11 +1000,11 @@ void matchWTARight_SSE(float32* dispImg, uint16* &dsiAgg, const int width, const
                     }
                 }
                 // assign disparity
-                // if (1024U*minCost <= factorUniq*secMinCost|| abs(bestDisp - secBestDisp) < 2  ) {
-                //     *pDestDisp = (float)bestDisp;
-                // } else {
-                //     *pDestDisp = -10;
-                // }
+                if (1024U*minCost <= factorUniq*secMinCost|| abs(bestDisp - secBestDisp) < 2  ) {
+                    *pDestDisp = (float)bestDisp;
+                } else {
+                    *pDestDisp = -10;
+                }
 
                 *pDestDisp = (float)bestDisp;
 
@@ -1096,9 +1096,9 @@ void subPixelRefine(float32* dispImg, uint16* dsiImg, const sint32 width, const 
                     _mm_store_ss(disp+x,result);
 
                 }
-                // else {
-                //     disp[x] = -10;
-                // }
+                else {
+                    disp[x] = -10;
+                }
             }
         }
         /* 1: parabolic */
@@ -1124,9 +1124,9 @@ void subPixelRefine(float32* dispImg, uint16* dsiImg, const sint32 width, const 
                     disp[x] = d_min + b /(float32) a;
 
                 } 
-                // else {
-                //     disp[x] = -10;
-                // }
+                else {
+                    disp[x] = -10;
+                }
             }
         }
     } else {
